@@ -19,5 +19,5 @@
     file: path=/var/run/munge state=directory mode=0700 owner=munge group=munge
 
   - name: set munge key contents
-    file: path=/etc/munge/munge.key owner=munge group=munge contents="{{ munge_key }]" mode=0600
+    file: path=/etc/munge/munge.key owner=munge group=munge contents="{{ munge_key }}" mode=0600
     notify: restart munge
