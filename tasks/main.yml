@@ -23,5 +23,5 @@
       - name: set munge key contents
         file: path=/etc/munge/munge.key owner=munge group=munge contents="{{ munge_key }}" mode=0600
         notify: restart munge
-  become: true
-  become_user: root
+    become: true
+    become_user: root
