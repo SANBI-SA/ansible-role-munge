@@ -52,7 +52,7 @@
     file: path=/var/log/munge state=directory mode=0700
 
   - name: set munge run directory access rights
-    file: path=/var/run/munge state=directory mode=0700 owner=munge group=munge
+    file: path=/var/run/munge state=directory mode=0755 owner=munge group=munge
 
   - name: set munge key contents
     copy: dest=/etc/munge/munge.key owner=munge group=munge content="{{ munge_key }}" mode=0600
