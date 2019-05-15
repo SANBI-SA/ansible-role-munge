@@ -7,7 +7,7 @@
 
     - name: Include "{{ansible_os_family}}" munge recipe if package is not present
       include: "{{ansible_os_family}}.yaml"
-      when: munge_installed is not defined or munge_installed.failed
+      when: munge_installed is not defined and not munge_installed.failed
 
     - name: Register munge key
       stat: path=/etc/munge/munge.key
