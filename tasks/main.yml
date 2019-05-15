@@ -44,9 +44,9 @@
         when: ansible_os_family == "RedHat" and ansible_distribution_major_version|int == 6
     when: ansible_os_family == "RedHat"
 
-  - name: Register munge key
-    stat: path=/etc/munge/munge.key
-    register: munge_key
+  # - name: Register munge key
+  #   stat: path=/etc/munge/munge.key
+  #   register: munge_key
 
   - name: set munge log directory access rights
     file: path=/var/log/munge state=directory mode=0700
