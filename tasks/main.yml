@@ -1,27 +1,61 @@
 ---
-  - name: Install munge and setup key
+- block:
+  - name: Start Munge service
+    service: name=munge state=started
+    register: munge_installed
+    ignore_errors: yes
+
+  - name: Install munge (Debian)
     block:
-      - name: Start Munge service
-        service: name=munge state=started
-        register: munge_installed
-        ignore_errors: yes
+      - name: Install munge
+        apt: name=munge update_cache=yes cache_valid_time=3600
+        register: munge_install
 
-      - name: Include "{{ansible_os_family}}" munge recipe if package is not present
-        include: "{{ansible_os_family}}.yaml"
-        when: munge_installed is not defined and not munge_installed.failed
+      - name: Delete /etc/munge/munge.key created in munge installation
+        file: path=/etc/munge/munge.key state=absent
+        when: munge_install|changed
+    when: ansible_os_family == "Debian"
 
-      - name: Register munge key
-        stat: path=/etc/munge/munge.key
-        register: munge_key
+  - name: Register munge key
+    stat: path=/etc/munge/munge.key
+    register: munge_key
 
-      - name: set munge log directory access rights
-        file: path=/var/log/munge state=directory mode=0700
+  - name: Install munge (RedHat)
+    block:
+      - name: Yum install epel
+        yum: name=epel-release
 
-      - name: set munge run directory access rights
-        file: path=/var/run/munge state=directory mode=0700 owner=munge group=munge
+      - name: Yum install munge
+        yum: name=munge,munge-devel
 
-      - name: set munge key contents
-        file: path=/etc/munge/munge.key owner=munge group=munge contents="{{ munge_key }}" mode=0600
-        notify: restart munge
-    become: true
-    become_user: root
+      - block:
+        - name: Yum install packages for Centos 6
+          yum: name=libselinux-python
+
+        # Fix for centos 6 due to socket errors
+        - name: Create munge config file
+          copy:
+            content: 'OPTIONS="--force"'
+            dest: /etc/default/munge
+            force: no
+            group: root
+            owner: root
+            mode: 0644
+        when: ansible_os_family == "RedHat" and ansible_distribution_major_version|int == 6
+    when: ansible_os_family == "RedHat"
+
+  - name: Register munge key
+    stat: path=/etc/munge/munge.key
+    register: munge_key
+
+  - name: set munge log directory access rights
+    file: path=/var/log/munge state=directory mode=0700
+
+  - name: set munge run directory access rights
+    file: path=/var/run/munge state=directory mode=0700 owner=munge group=munge
+
+  - name: set munge key contents
+    file: path=/etc/munge/munge.key owner=munge group=munge contents="{{ munge_key }}" mode=0600
+    notify: restart munge
+become: true
+become_user: root
