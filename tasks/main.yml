@@ -13,12 +13,8 @@
 
       - name: Delete /etc/munge/munge.key created in munge installation
         file: path=/etc/munge/munge.key state=absent
-        when: munge_install|changed
+        when: munge_install.changed
     when: ansible_os_family == "Debian"
-
-  - name: Register munge key
-    stat: path=/etc/munge/munge.key
-    register: munge_key
 
   - name: Install munge (RedHat)
     block:
@@ -57,5 +53,14 @@
   - name: set munge key contents
     copy: dest=/etc/munge/munge.key owner=munge group=munge content="{{ munge_key }}" mode=0600
     notify: restart munge
+    when: not munge_key_is_b64encoded
+
+  - name: set munge key contents (b64encoded)
+    shell: base64 -d >/etc/munge/munge.key && chown munge:munge /etc/munge/munge.key && chmod 0600 /etc/munge/munge.key
+    args:
+      stdin: "{{ munge_key }}"
+    notify: restart munge
+    when: munge_key_is_b64encoded
+
   become: true
   become_user: root
